@@ -1,0 +1,86 @@
+@using FileUploadAndDownload.Controllers;
+@model IEnumerable<File>;
+
+
+<html>
+
+<head>
+    <title>
+        文件上传与下载
+    </title>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        @using (Html.BeginForm("FileUpload", "File", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            <div class="form-horizontal" style="margin-top:80px;">
+                <div class="form-group">
+                    <label class="control-label col-md-2" for="caption">标题</label>
+                    <div class="col-md-10">
+                        <input name="title" id="title" type="text" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-2" for="caption">文件</label>
+                    <div class="col-md-10">
+                        <input name="files" id="file" multiple type="file" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="submit" id="btn" value="提交" class="btn btn-success" />
+                    </div>
+                </div>
+            </div>
+        }
+
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        文件名
+                    </th>
+                    <th>
+                        标题
+                    </th>
+                    <th>
+                        地址
+                    </th>
+                    <th>
+                        操作
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            @item.Title
+                        </td>
+                        <td>
+                            @item.Url
+                        </td>
+                        <td>
+                            @using (Html.BeginForm("FileDownload", "File", routeValues: new
+                            {
+                                name = item.Name
+                            }, FormMethod.Get))
+                            {
+                                <input type="text" value="@item.Url" name="url" hidden />
+                                <button type="submit">下载</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
