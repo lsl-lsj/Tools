@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -37,7 +38,7 @@ namespace Jwt
                         ValidateIssuer = true,//是否验证Issuer
                         ValidateAudience = true,//是否验证Audience
                         ValidateLifetime = true,//是否验证失效时间
-                        ClockSkew = TimeSpan.FromSeconds(5),
+                        ClockSkew = TimeSpan.FromSeconds(30),
                         ValidateIssuerSigningKey = true,//是否验证SecurityKey
                         ValidAudience = Const.Domain,//Audience
                         ValidIssuer = Const.Domain,//Issuer，这两项和前面签发jwt的设置一致
@@ -47,9 +48,29 @@ namespace Jwt
                     // options.ForwardSignIn = "http://localhost:5000/api/login";
                     options.Events = new JwtBearerEvents
                     {
+                        // OnAuthenticationFailed = context =>
+                        //  {
+                        //      context.Response.Redirect("/api/login?username=admin&pwd=123");
+                        //      return Task.CompletedTask;
+                        //  },
+                        OnMessageReceived  = context =>
+                        {
+                            context.Response.Redirect("/api/login");
+                            return Task.CompletedTask;
+                        },
                         OnForbidden = context =>
                         {
                             context.Response.Redirect("/api/login");
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        {
+                            var path = context.Request.Path.Value.ToString();
+                            if(path == "/api/get")
+                            {
+                                context.Response.Cookies.Delete("Authorization");
+                                context.Response.Redirect("/api/login");
+                            }
                             return Task.CompletedTask;
                         }
                     };
@@ -57,7 +78,7 @@ namespace Jwt
                 });
             #endregion
 
-            services.AddControllers();//.SetCompatibilityVersion(CompatibilityVersion.Latest);
+            services.AddControllers().SetCompatibilityVersion(CompatibilityVersion.Latest);
 
         }
 
@@ -69,6 +90,7 @@ namespace Jwt
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseMiddleware<FilterMiddleware>();
             app.UseRouting();
 
             //这是认证

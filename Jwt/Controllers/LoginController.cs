@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,11 +22,12 @@ namespace Jwt.Controllers
             {
                 var claims = new[]
                 {
-                    new Claim(JwtRegisteredClaimNames.Nbf,$"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}") ,
-                    new Claim (JwtRegisteredClaimNames.Exp,$"{new DateTimeOffset(DateTime.Now.AddMinutes(30)).ToUnixTimeSeconds()}"),
+                    // new Claim(JwtRegisteredClaimNames.Nbf,$"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}") ,
+                    // new Claim (JwtRegisteredClaimNames.Exp,$"{new DateTimeOffset(DateTime.Now.AddMinutes(30)).ToUnixTimeSeconds()}"),
                     new Claim(ClaimTypes.Name, userName),
-                    new Claim("pwd", pwd)
-                };
+                    new Claim("pwd", pwd),
+                    new Claim(ClaimTypes.Role,userName)
+            };
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Const.SecurityKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
                 var token = new JwtSecurityToken(
@@ -37,6 +38,13 @@ namespace Jwt.Controllers
                     signingCredentials: creds
                     );
 
+
+                var cookies = HttpContext.Response.Cookies;
+                // cookies.Delete("Authorization");
+                cookies.Append("Authorization", new JwtSecurityTokenHandler().WriteToken(token), new CookieOptions
+                {
+                    Expires = DateTime.Now.AddSeconds(10)
+                });
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token)
