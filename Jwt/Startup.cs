@@ -29,21 +29,33 @@ namespace Jwt
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddDistributedMemoryCache();
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(10);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             #region JWT验证
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        AudienceValidator = (m,n,z) =>
+                        {
+                            return m != null && m.FirstOrDefault().Equals(Const.Audience);
+                        },
                         ValidateIssuer = true,//是否验证Issuer
                         ValidateAudience = true,//是否验证Audience
                         ValidateLifetime = true,//是否验证失效时间
-                        ClockSkew = TimeSpan.FromSeconds(30),
+                        ClockSkew = TimeSpan.FromSeconds(100),
                         ValidateIssuerSigningKey = true,//是否验证SecurityKey
-                        ValidAudience = Const.Domain,//Audience
-                        ValidIssuer = Const.Domain,//Issuer，这两项和前面签发jwt的设置一致
+                        ValidAudience = Const.Audience,//Audience
+                        ValidIssuer = Const.Issuer,//Issuer，这两项和前面签发jwt的设置一致
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Const.SecurityKey)),//拿到SecurityKey
-
                     };
                     // options.ForwardSignIn = "http://localhost:5000/api/login";
                     options.Events = new JwtBearerEvents
@@ -53,26 +65,21 @@ namespace Jwt
                         //      context.Response.Redirect("/api/login?username=admin&pwd=123");
                         //      return Task.CompletedTask;
                         //  },
-                        OnMessageReceived  = context =>
-                        {
-                            context.Response.Redirect("/api/login");
-                            return Task.CompletedTask;
-                        },
                         OnForbidden = context =>
                         {
                             context.Response.Redirect("/api/login");
                             return Task.CompletedTask;
                         },
-                        OnTokenValidated = context =>
-                        {
-                            var path = context.Request.Path.Value.ToString();
-                            if(path == "/api/get")
-                            {
-                                context.Response.Cookies.Delete("Authorization");
-                                context.Response.Redirect("/api/login");
-                            }
-                            return Task.CompletedTask;
-                        }
+                        // OnTokenValidated = context =>
+                        // {
+                        //     var path = context.Request.Path.Value.ToString();
+                        //     if(path == "/api/get")
+                        //     {
+                        //         context.Response.Cookies.Delete("Authorization");
+                        //         context.Response.Redirect("/api/login?username=123&pwd=123");
+                        //     }
+                        //     return Task.CompletedTask;
+                        // }
                     };
                     // options.ForwardForbid = "http://localhost:5000/api/login";
                 });
@@ -90,6 +97,7 @@ namespace Jwt
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSession();
             app.UseMiddleware<FilterMiddleware>();
             app.UseRouting();
 

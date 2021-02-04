@@ -37,8 +37,7 @@
     <script>
         function changeImage() {
             var img = document.getElementById("captcha");
-            img.src = "/api/Captcha";
-            @* + new Date().getTime(); *@
+            img.src = "/api/Captcha?" + new Date().getTime();
         }
     </script>
 </body>

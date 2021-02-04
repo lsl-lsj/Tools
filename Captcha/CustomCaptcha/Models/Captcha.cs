@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Captcha.Models
 {
-    public class Captcha : ICaptcha
+    public class Captcha //: ICaptcha
     {
         private const string Letters = @"1,2,3,4,5,6,7,8,9,0,
                                          A,B,C,D,E,F,G,H,J,K,L,M,N,P,Q,R,S,T,U,V,W,X,Y,Z,
                                          a,b,c,d,e,f,g,h,j,k,l,m,n,p,q,r,s,t,u,v,w,x,y,z";
-        public Task<CaptchaResult> GenerateCaptchaImageAsync(string captchaCode, int width = 0, int height = 30)
+        public static Task<MemoryStream> GenerateCaptchaImageAsync(string captchaCode, int width = 0, int height = 30)
         {
             //验证码颜色集合
             Color[] c = { Color.Black, Color.Red, Color.DarkBlue, Color.Green, Color.Orange, Color.Brown, Color.DarkCyan, Color.Purple };
@@ -76,15 +76,16 @@ namespace Captcha.Models
             g.Dispose();
             image.Dispose();
 
-            return Task.FromResult(new CaptchaResult
-            {
-                CaptchaCode = captchaCode,
-                CaptchaMemoryStream = ms,
-                Timestamp = DateTime.Now
-            });
+            return Task.FromResult(ms);
+            // new CaptchaResult
+            // {
+            //     CaptchaCode = captchaCode,
+            //     CaptchaMemoryStream = ms,
+            //     Timestamp = DateTime.Now
+            // }
         }
 
-        public Task<string> GenerateRandomCaptchaAsync(int codeLength = 4)
+        public static Task<string> GenerateRandomCaptchaAsync(int codeLength = 4)
         {
             var array = Letters.Split(new[] { ',' });
 

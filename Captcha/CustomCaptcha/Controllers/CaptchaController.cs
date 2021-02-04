@@ -20,13 +20,14 @@ namespace Captcha.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> CaptchaAsync([FromServices] ICaptcha _captcha)
+        public async Task<IActionResult> CaptchaAsync()
         {
-            var code = await _captcha.GenerateRandomCaptchaAsync();
+            // var code = await Captcha.Models.Captcha.GenerateRandomCaptchaAsync();
 
-            var result = await _captcha.GenerateCaptchaImageAsync(code);
+            // var result = await Captcha.Models.Captcha.GenerateCaptchaImageAsync(code);
 
-            return File(result.CaptchaMemoryStream.ToArray(), "image/png");
+            return File((await Captcha.Models.Captcha.GenerateCaptchaImageAsync(
+                            await Captcha.Models.Captcha.GenerateRandomCaptchaAsync())).ToArray(), "image/png");
         }
     }
 }
